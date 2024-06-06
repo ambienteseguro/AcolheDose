@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication Chart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input, select {
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .counter {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            background-color: blue;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #nomeContainer {
+            display: none;
+            flex-direction: column;
+        }
+        #visualizarContainer {
+            display: none;
+            flex-direction: column;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #visualizarContainer button {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Medication Chart</h1>
+        
+        <form id="medForm">
+            <label for="medicamento">Medicamento:</label>
+            <input type="text" id="medicamento" name="medicamento" maxlength="30" required>
+            
+            <label for="quantidade">Quantidade:</label>
+            <input type="text" id="quantidade" name="quantidade" maxlength="30" required>
+            
+            <label for="intervalo">Intervalo (Horas):</label>
+            <input type="number" id="intervalo" name="intervalo" min="1" max="24" required>
+            
+            <label for="periodo">Período (Dias):</label>
+            <input type="number" id="periodo" name="periodo" min="1" max="365" required>
+            
+            <label for="dataInicio">Data de Início:</label>
+            <input type="date" id="dataInicio" name="dataInicio" required>
+            
+            <label for="horaInicio">Hora de Início:</label>
+            <input type="time" id="horaInicio" name="horaInicio" required>
+            
+            <div class="counter" id="counter">MEDICAMENTOS CADASTRADOS: 0</div>
+
+            <div class="button-container">
+                <button type="button" onclick="salvarDados()">Salvar</button>
+                <button type="button" onclick="perguntarNome()">Visualizar</button>
+            </div>
+        </form>
+
+        <div id="visualizarContainer">
+            <p>Deseja inserir o nome de quem utilizará a medicação?</p>
+            <div class="button-container">
+                <button type="button" onclick="mostrarCampoNome()">Sim</button>
+                <button type="button" onclick="visualizarDados(false)">Não</button>
+            </div>
+        </div>
+
+        <div id="nomeContainer">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" maxlength="60">
+            <button type="button" onclick="visualizarDados(true)">Visualizar Tabela</button>
+        </div>
+    </div>
+    <footer>
+        <p>Desenvolvido por: <a href="https://www.rsctechnology.com.br/">RSC TECHNOLOGY</a></p>
+    </footer>
+    <script>
+        let contador = 0;
+        let novosDados = [];
+        let nomeInserido = '';
+
+        function salvarDados() {
+            const medicamento = document.getElementById('medicamento').value;
+            const quantidade = document.getElementById('quantidade').value;
+            const intervalo = parseInt(document.getElementById('intervalo').value);
+            const periodo = parseInt(document.getElementById('periodo').value);
+            const dataInicio = document.getElementById('dataInicio').value;
+            const horaInicio = document.getElementById('horaInicio').value;
+
+            if (medicamento && quantidade && intervalo && periodo && dataInicio && horaInicio) {
+                const doses = calcularDoses(dataInicio, horaInicio, intervalo, periodo);
+
+                const novoDado = {
+                    medicamento,
+                    quantidade,
+                    intervalo,
+                    periodo,
+                    dataInicio,
+                    horaInicio,
+                    doses
+                };
+
+                novosDados.push(novoDado);
+                document.getElementById('medForm').reset();
+                contador++;
+                atualizarContador();
+            } else {
+                alert("Por favor, preencha todos os campos.");
+            }
+        }
+
+        function perguntarNome() {
+            if (contador > 0) {
+                document.getElementById('visualizarContainer').style.display = 'flex';
+            } else {
+                alert("Nenhum medicamento cadastrado. Por favor, salve os dados primeiro.");
+            }
+        }
+
+        function mostrarCampoNome() {
+            document.getElementById('visualizarContainer').style.display = 'none';
+            document.getElementById('nomeContainer').style.display = 'flex';
+        }
+
+        function visualizarDados(inserirNome) {
+            if (contador === 0) {
+                alert("Nenhum medicamento cadastrado. Por favor, salve os dados primeiro.");
+                return;
+            }
+
+            if (inserirNome) {
+                nomeInserido = document.getElementById('nome').value;
+            }
+
+            const dosesOrdenadas = [];
+
+            novosDados.forEach(dado => {
+                dado.doses.forEach(dose => {
+                    dosesOrdenadas.push({
+                        data: dose,
+                        medicamento: dado.medicamento,
+                        quantidade: dado.quantidade
+                    });
+                });
+            });
+
+            dosesOrdenadas.sort((a, b) => a.data - b.data);
+            exibirTabela(dosesOrdenadas, nomeInserido);
+
+            novosDados = [];
+            contador = 0;
+            atualizarContador();
+            limparCampos();
+        }
+
+        function calcularDoses(dataInicio, horaInicio, intervalo, periodo) {
+            const doses = [];
+            let data = new Date(`${dataInicio}T${horaInicio}`);
+            const totalDoses = Math.floor((24 / intervalo) * periodo);
+
+            for (let i = 0; i < totalDoses; i++) {
+                if (i > 0) {
+                    data = new Date(data.getTime() + intervalo * 60 * 60 * 1000);
+                }
+                doses.push(new Date(data));
+            }
+
+            return doses;
+        }
+
+        function exibirTabela(dosesOrdenadas, nome) {
+            let novaAba = window.open('', '_blank');
+            novaAba.document.write('<html><head><title>Medication Chart</title>');
+            novaAba.document.write('<style>table { width: 100%; border-collapse: collapse; margin-top: 20px; } table, th, td { border: 1px solid black; } th, td { padding: 10px; text-align: center; } footer { text-align: center; margin-top: 20px; }</style>');
+            novaAba.document.write('</head><body>');
+            novaAba.document.write('<h1>Medication Chart</h1>');
+            novaAba.document.write(`<h2>Nome: ${nome || ''}</h2>`);
+            novaAba.document.write('<table><thead><tr><th>Data</th><th>Hora</th><th>Medicamento</th><th>Quantidade</th></tr></thead><tbody>');
+
+            dosesOrdenadas.forEach((dado) => {
+                const dataFormatada = dado.data.toLocaleDateString('pt-BR');
+                const horarioFormatado = dado.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                novaAba.document.write(`<tr><td>${dataFormatada}</td><td>${horarioFormatado}</td><td>${dado.medicamento}</td><td>${dado.quantidade}</td></tr>`);
+            });
+
+            novaAba.document.write('</tbody></table>');
+            novaAba.document.write('<footer><p><a href="https://www.rsctechnology.com.br/">www.rsctechnology.com.br</a></p></footer>');
+            novaAba.document.write('</body></html>');
+            novaAba.document.close();
+        }
+
+        function atualizarContador() {
+            document.getElementById('counter').textContent = `MEDICAMENTOS CADASTRADOS: ${contador}`;
+        }
+
+        function limparCampos() {
+            document.getElementById('medForm').reset();
+            document.getElementById('nomeContainer').style.display = 'none';
+            document.getElementById('visualizarContainer').style.display = 'none';
+            document.getElementById('nome').value = '';
+        }
+    </script>
+</body>
+</html>
